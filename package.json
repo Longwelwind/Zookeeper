@@ -1,0 +1,22 @@
+{
+  "name": "zookeeper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "createjs-easeljs": "^0.8.2",
+    "createjs-soundjs": "^0.6.2",
+    "requirejs": "^2.2.0",
+    "vue": "^1.0.20",
+    "xorox": "^1.0.0",
+    "xorox-audio": "^1.0.0",
+    "xorox-canvas": "^1.0.0",
+    "xorox-input": "^1.0.0",
+    "xorox-ui": "^1.0.0"
+  }
+}

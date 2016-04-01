@@ -1,0 +1,232 @@
+<html>
+	<head>
+        <script src="requirejs-config.js"></script>
+		<script data-main="script.js" src="./node_modules/requirejs/require.js"></script>
+        <title>Zookeeper</title>
+        <link href='https://fonts.googleapis.com/css?family=Bitter:400,700' rel='stylesheet' type='text/css'>
+        <style>
+            body {
+                background-image: url("./public/bg.svg");
+                background-position: center center;
+                background-size: cover;
+                font-family: "Bitter";
+                color: rgb(148, 148, 148);
+                font-size: 20px;
+                position: relative;
+            }
+            
+            .tile {
+                height: 48px;
+                width: 48px;
+                background-image: url(./public/tiles.png);
+            }
+            
+            .caret-down {
+                height: 24px;
+                background-image: url(./public/down.png);
+                background-position: center center;
+                
+                align-self: center;
+            }
+            
+            .locked {
+                width: 48px;
+                height: 35px;
+                background-image: url(./public/locked.png);
+                background-repeat: no-repeat no-repeat;
+                background-position: center center;
+            }
+            
+            #tilebar-container {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .panel {
+                border: 10px solid white;
+                border-image: url("public/grey_panel.png") 10 10 10 10 fill repeat;
+            }
+            
+            .score-panel {
+                width: 200px;
+            }
+            
+            .score-panel .score {
+                font-size: 28px;
+            }
+            
+            .game-over-overlay {
+                position: absolute;
+                height: 100%;
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .game-over-panel {
+                width: 400px;
+            }
+            
+            .game-over-panel .title {
+                font-weight: bold;
+                font-size: 26px;
+                text-align: center;
+            }
+            
+            .game-over-panel .sub-title {
+                font-size: 20px;
+            }
+            
+            .game-over-panel .number {
+                font-size: 28px;
+            }
+            
+            .button {
+                border: 10px solid white;
+                font-family: inherit;
+                font-size: inherit;
+                padding-bottom: 4px;
+            }
+            
+            .button::-moz-focus-inner {
+                border: 0;
+            }
+            
+            .button-blue {
+                border-image: url("public/blue_button00.png") 10 10 10 10 fill repeat;
+                color: rgb(216, 255, 255);
+            }
+            
+            .button:hover {
+                border-image-source: url("public/blue_button02.png");
+            }
+            
+            .button:active {
+                margin-top: 4px;
+                padding-bottom: 0px;
+                border-image: url("public/blue_button03.png") 10 10 10 10 fill repeat;
+            }
+            
+            .panel-help {
+                width: 200px;
+                font-size: 14px;
+            }
+            .panel-help .title {
+                font-size: 18px;
+                font-weight: bold;
+            }
+            
+            .horizontal-bar {
+                position: absolute;
+                width: calc(48px * 6);
+                height: 0px;
+                border: 1px solid rgba(148, 148, 148, 0.3);
+                border-radius: 4px;
+                margin-top: calc(48px * 2);
+            }
+            
+        </style>
+        
+        <!-- Piwik -->
+        <script type="text/javascript">
+        var _paq = _paq || [];
+        _paq.push(["setDomains", ["*.zoo.longwelwind.net"]]);
+        _paq.push(['trackPageView']);
+        _paq.push(['enableLinkTracking']);
+        (function() {
+            var u="//piwik.longwelwind.net/";
+            _paq.push(['setTrackerUrl', u+'piwik.php']);
+            _paq.push(['setSiteId', 2]);
+            var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+            g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+        })();
+        </script>
+        <noscript><p><img src="//piwik.longwelwind.net/piwik.php?idsite=2" style="border:0;" alt="" /></p></noscript>
+        <!-- End Piwik Code -->
+	</head>
+    
+	<body id="body">
+        <div class="game-over-overlay">
+            <div id="game-over-container"></div>
+        </div>
+        <div style="display: flex; justify-content: center">
+            <div>
+                <div id="score-container"></div>
+                <div class="panel panel-help" style="margin-top: 10px;">
+                    <div class="title">How to play</div>
+                    Match 3 animals to bring a new more rare animal. Try to unlock the last animal and
+                    stack as much animals as you can to get a big score !
+                    
+                    <div class="title">Controls</div>
+                    Up - Rotate<br />
+                    Left/Right - Move<br />
+                    Down - Drop<br />
+                </div>
+            </div>
+            <div class="panel game-panel" style="margin-left: 10px">
+                <div class="horizontal-bar"></div>
+                <canvas id="gameCanvas" height="480" width="288">
+                    
+                </canvas>
+            </div>
+            <div id="tilebar-container">
+                
+            </div>
+        </div>
+        
+        <script type="text/html" id="score-template">
+            <div class="panel score-panel">
+                <div class="title">
+                    Score
+                </div>
+                <div class="score">
+                    {{ score }}
+                </div>
+            </div>
+        </script>
+        <script type="text/html" id="tilebar-template">
+            <div class="panel" style="margin-left: 10px">
+                <div v-for="(index, type) in $data.getAvailableTileTypes()">
+                    <div class="tile"
+                    style="background-position: {{-(type.frameNumber % 5) * 48}}px {{-Math.floor(type.frameNumber / 5) * 48}}px">
+                    </div>
+                    
+                    <div class="caret-down" v-if="index != $root.tileTypes.length - 1"></div>
+                </div>
+                
+                <div class="locked" v-if="!$data.isAllUnlocked()"></div>
+            </div>
+        </script>
+        <script type="text/html" id="game-over-template">
+            <div class="panel game-over-panel" v-if="phase == 2">
+                <div class="title">
+                    Game over
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <div>
+                        <div class="sub-title">Score</div>
+                        <div class="number">
+                            {{ score }}
+                        </div>
+                        <div class="sub-title">Time elapsed</div>
+                        <div class="number">
+                            {{$data.getTimeElapsed().minutes}}:{{$data.getTimeElapsed().seconds}}
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content: center; align-items: center;margin-right: 15px;">
+                        <!-- ko with: tileTypes[lastUnlockedTier-1] -->
+                        <div class="tile"
+                    style="background-position: {{-(type.frameNumber % 5) * 48}}px {{-Math.floor(type.frameNumber / 5) * 48}}px">
+                        </div>
+                        <!-- /ko -->
+                    </div>
+                    
+                </div>
+                <div style="display: flex; justify-content: center;">
+                    <button class="button button-blue" onclick="location.reload()">Replay</button>
+                </div>
+            </div>
+        </script>
+	</body>
+</html>
